@@ -2,6 +2,7 @@
 
 use clap::error::ErrorKind;
 use clap::{ArgGroup, CommandFactory, Parser, Subcommand, ValueEnum};
+
 use versio::commands::*;
 use versio::errors::Result;
 use versio::init::init;
@@ -251,7 +252,11 @@ enum Commands {
   },
 
   /// Output a JSON schema for the config file
-  Schema {}
+  Schema {
+    #[arg(short, long)]
+    /// If specified, it generates schema to file, otherwise to stdout
+    output_path: Option<String>
+  }
 }
 
 impl Commands {
@@ -335,7 +340,7 @@ pub async fn execute(early_info: &EarlyInfo) -> Result<()> {
       info(pref_vcs, id, name, exact, label, show, no_current)?
     }
     Commands::Template { template: t } => template(early_info, t).await?,
-    Commands::Schema {} => schema()?
+    Commands::Schema { output_path } => schema(&output_path)?
   }
 
   Ok(())

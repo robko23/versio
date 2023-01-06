@@ -1,5 +1,12 @@
 //! The command-line options for the executable.
 
+use std::collections::HashMap;
+use std::fs::{remove_file, File};
+use std::io::BufReader;
+use std::path::{Path, PathBuf};
+
+use schemars::schema_for;
+
 use crate::bail;
 use crate::config::{Config, ConfigFile, ProjectId, Size};
 use crate::errors::{Context as _, Result};
@@ -9,11 +16,6 @@ use crate::output::{Output, ProjLine};
 use crate::state::{CommitState, StateRead};
 use crate::template::read_template;
 use crate::vcs::{VcsLevel, VcsRange, VcsState};
-use schemars::schema_for;
-use std::collections::HashMap;
-use std::fs::{remove_file, File};
-use std::io::BufReader;
-use std::path::{Path, PathBuf};
 
 pub fn early_info() -> Result<EarlyInfo> {
   let vcs = VcsRange::detect()?.max();
@@ -222,9 +224,17 @@ pub fn info(
   Ok(())
 }
 
-pub fn schema() -> Result<()> {
+pub fn schema(path: &Option<String>) -> Result<()> {
   let schema = schema_for!(ConfigFile);
-  println!("{}", serde_json::to_string_pretty(&schema).unwrap());
+  let contents = serde_json::to_string_pretty(&schema).expect("Serializable struct");
+  match path {
+    Some(path) => {
+      std::fs::write(path, contents).expect(&format!("Could not create '{}'", path));
+    }
+    None => {
+      println!("{}", contents);
+    }
+  }
   Ok(())
 }
 
